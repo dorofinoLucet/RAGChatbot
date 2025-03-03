@@ -1,0 +1,129 @@
+﻿@inherits LayoutComponentBase
+@using MudBlazor
+@inject ChatStateService ChatState
+
+<MudThemeProvider Theme="@_theme" IsDarkMode="@_isDarkMode" />
+<MudPopoverProvider />
+<MudDialogProvider />
+<MudSnackbarProvider />
+<MudLayout>
+    <MudAppBar Elevation="1">
+        <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start" OnClick="@DrawerToggle" />
+        @if (!_drawerOpen)
+        {
+            <MudButton Variant="Variant.Filled"
+                       Color="Color.Primary"
+                       Class="mr-3"
+                       OnClick="@(async () => await ChatState.HandleNewConversation())">
+                New
+            </MudButton>
+        }
+        <MudText Typo="Typo.h6" Class="ml-3">Chatbot</MudText>
+        <MudSpacer />
+        <MudIconButton Icon="@DarkLightModeButtonIcon" Color="Color.Inherit" OnClick="@DarkModeToggle" />
+    </MudAppBar>
+
+    <MudDrawer @bind-Open="_drawerOpen" Width="250px">
+        <div class="mud-toolbar mud-toolbar-gutters mud-toolbar-appbar mud-elevation-1">
+        <MudButton Variant="Variant.Filled"
+                   Color="Color.Primary"
+                       Class="ma-3"
+                   OnClick="@(async () => await ChatState.HandleNewConversation())">
+            New Conversation
+        </MudButton>
+        </div>
+        <div>
+        <ChatSidebar Conversations="ChatState.ConversationSummaries"
+                     SelectedConversation="ChatState.SelectedConversation"
+                     OnSelectConversation="EventCallback.Factory.Create<string>(this, async (id) => await ChatState.SelectConversation(id))"
+                     OnDeleteConversation="EventCallback.Factory.Create<string>(this, async (id) => await ChatState.DeleteConversation(id))"
+                     OnNewConversation="EventCallback.Factory.Create(this, async () => await ChatState.HandleNewConversation())" />
+        </div>
+    </MudDrawer>
+
+    <MudMainContent>
+        @Body
+    </MudMainContent>
+</MudLayout>
+
+
+
+<div id="blazor-error-ui" data-nosnippet>
+    An unhandled error has occurred.
+    <a href="." class="reload">Reload</a>
+    <span class="dismiss">🗙</span>
+</div>
+
+@code {
+    private bool _drawerOpen = true;
+    private bool _isDarkMode = false; // Changed to false to match White Angel theme
+    private MudTheme _theme;
+
+    protected override void OnInitialized()
+    {
+        ChatState.OnChange += StateHasChanged;
+        _theme = new MudTheme
+        {
+            PaletteLight = new PaletteLight
+            {
+                Primary = "#F0F6FC",         // Even lighter pastel blue for user messages
+                Secondary = "#F1FAF3",       // Even lighter pastel green for bot messages
+                Background = "#FFFFFF",      // Pure white background
+                BackgroundGray = "#F5F5F5",  // Light gray background alternative
+                Surface = "#FFFFFF",         // Pure white surfaces for cards, etc.
+                AppbarBackground = "#FFFFFF", // Clean white app bar background
+                AppbarText = "#1A1A1A",      // Very dark gray for app bar text
+                PrimaryContrastText = "#1A1A1A",
+                TextPrimary = "#1A1A1A",     // Very dark gray for main text (improved contrast)
+                TextSecondary = "#333333",   // Darker gray for secondary text
+                TextDisabled = "#9E9E9E",    // Disabled text with enough contrast
+                ActionDefault = "#424242",   // Default action color (e.g., icons)
+                ActionDisabled = "#E0E0E0",  // Disabled actions
+                ActionDisabledBackground = "#F0F0F0", // Disabled action backgrounds
+                DrawerBackground = "#FFFFFF", // Pure white drawers
+                DrawerText = "#1A1A1A",      // Very dark gray for drawer text
+                DrawerIcon = "#616161",      // Medium gray icons in drawers
+                Info = "#29B6F6",            // Fresh blue for informational elements
+                Success = "#66BB6A",         // Gentle green for success messages
+                Warning = "#FFA726",         // Warm amber for warnings
+                Error = "#EF5350",           // Soft red for errors
+                LinesDefault = "#E0E0E0",    // Light gray lines
+                TableLines = "#E0E0E0",      // Table borders
+                Divider = "#BDBDBD",         // Darker divider for better separation
+                OverlayLight = "rgba(255, 255, 255, 0.8)" // Light overlay with higher opacity
+            }
+        };
+    }
+
+    public void Dispose()
+    {
+        ChatState.OnChange -= StateHasChanged;
+    }
+
+    private void DrawerToggle()
+    {
+        _drawerOpen = !_drawerOpen;
+    }
+
+    private void DarkModeToggle()
+    {
+        _isDarkMode = !_isDarkMode;
+    }
+
+    public string DarkLightModeButtonIcon => _isDarkMode switch
+    {
+        true => Icons.Material.Rounded.AutoMode,
+        false => Icons.Material.Outlined.DarkMode
+    };
+
+    // In OnAfterRenderAsync we check for scroll and auto-create conversation if needed.
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        // If there's no active conversation, create a new one.
+        if ((ChatState.ConversationSummaries == null || !ChatState.ConversationSummaries.Any())
+            && ChatState.SelectedConversation == null)
+        {
+            await ChatState.HandleNewConversation();
+        } 
+    }
+}

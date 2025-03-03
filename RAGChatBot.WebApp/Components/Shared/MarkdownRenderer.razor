@@ -1,0 +1,49 @@
+﻿@using Markdig
+@inject IJSRuntime JS
+
+<div class="markdown-content" style="margin-bottom: 0;">
+    @((MarkupString)HtmlContent)
+</div>
+
+@code {
+    [Parameter]
+    public string Content { get; set; } = "";
+
+    private string HtmlContent
+    {
+        get
+        {
+            if (string.IsNullOrEmpty(Content))
+            {
+                return "<p>No content provided</p>";
+            }
+
+            // Convert Markdown to HTML
+            string html = Markdown.ToHtml(Content);
+
+            // Trim trailing newline or whitespace
+            html = html.TrimEnd('\n').TrimEnd();
+
+            // Add a copy button to each code block
+            html = AddCopyButtonToCodeBlocks(html);
+
+            return html;
+        }
+    }
+
+    private string AddCopyButtonToCodeBlocks(string html)
+    {
+        return html.Replace("<pre><code",
+                "<div class='code-container'>" +
+                "<button class='copy-button' onclick='copyToClipboard(this)'>" +
+                "<i class='fas fa-copy'></i>" +
+                "</button>" +
+                "<pre class='code-block'><code")
+                   .Replace("</code></pre>", "</code></pre></div>");
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        await JS.InvokeVoidAsync("console.log", $"Content received: {Content}");
+    }
+}

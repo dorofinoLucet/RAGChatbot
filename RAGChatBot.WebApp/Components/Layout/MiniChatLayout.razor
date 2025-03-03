@@ -1,0 +1,88 @@
+﻿@inherits LayoutComponentBase
+@using MudBlazor
+
+<!-- Minimal layout with White Angel healthcare theme -->
+<MudThemeProvider Theme="@_theme" IsDarkMode="false" />
+<MudPopoverProvider />
+<MudDialogProvider />
+<MudSnackbarProvider />
+
+<MudLayout>
+    <MudAppBar Elevation="1" Style="background-color: #FFFFFF;">
+        <MudText Typo="Typo.h6" Class="ml-3" Style="color: #1A1A1A;">Chatbot</MudText>
+        <MudSpacer />
+    </MudAppBar>
+</MudLayout>
+
+<div style="margin-top: 75px; display: flex; justify-content: center; align-items: center; background-color: #FFFFFF;">
+    @Body
+</div>
+
+@code {
+    // Updated White Angel theme (light mode) with softer conversation colors and good contrast
+    private MudTheme _theme = new MudTheme
+        {
+            PaletteLight = new PaletteLight
+            {
+                Primary = "#F0F6FC",         // Even lighter pastel blue for user messages
+                Secondary = "#F1FAF3",       // Even lighter pastel green for bot messages
+                Background = "#FFFFFF",      // Pure white background
+                BackgroundGray = "#F5F5F5",  // Light gray background alternative
+                Surface = "#FFFFFF",         // Pure white surfaces for cards, etc.
+                AppbarBackground = "#FFFFFF", // Clean white app bar background
+                AppbarText = "#1A1A1A",      // Very dark gray for app bar text
+                TextPrimary = "#1A1A1A",     // Very dark gray for main text (improved contrast)
+                TextSecondary = "#333333",   // Darker gray for secondary text
+                TextDisabled = "#9E9E9E",    // Disabled text with enough contrast
+                ActionDefault = "#424242",   // Default action color (e.g., icons)
+                ActionDisabled = "#E0E0E0",  // Disabled actions
+                ActionDisabledBackground = "#F0F0F0", // Disabled action backgrounds
+                DrawerBackground = "#FFFFFF", // Pure white drawers
+                DrawerText = "#1A1A1A",      // Very dark gray for drawer text
+                DrawerIcon = "#616161",      // Medium gray icons in drawers
+                Info = "#29B6F6",            // Fresh blue for informational elements
+                Success = "#66BB6A",         // Gentle green for success messages
+                Warning = "#FFA726",         // Warm amber for warnings
+                Error = "#EF5350",           // Soft red for errors
+                LinesDefault = "#E0E0E0",    // Light gray lines
+                TableLines = "#E0E0E0",      // Table borders
+                Divider = "#BDBDBD",         // Darker divider for better separation
+                OverlayLight = "rgba(255, 255, 255, 0.8)" // Light overlay with higher opacity
+            }
+        };
+
+    // Original dark theme (commented out as a backup)
+    /*
+    private MudTheme _theme = new MudTheme
+        {
+        PaletteDark = new PaletteDark
+            {
+            Primary = "#7e6fff",
+            Surface = "#1e1e2d",
+            Background = "#1a1a27",
+            BackgroundGray = "#151521",
+            AppbarText = "#92929f",
+            AppbarBackground = "rgba(26,26,39,0.8)",
+            DrawerBackground = "#1a1a27",
+            ActionDefault = "#74718e",
+            ActionDisabled = "#9999994d",
+            ActionDisabledBackground = "#605f6d4d",
+            TextPrimary = "#b2b0bf",
+            TextSecondary = "#92929f",
+            TextDisabled = "#ffffff33",
+            DrawerIcon = "#92929f",
+            DrawerText = "#92929f",
+            GrayLight = "#2a2833",
+            GrayLighter = "#1e1e2d",
+            Info = "#4a86ff",
+            Success = "#3dcb6c",
+            Warning = "#ffb545",
+            Error = "#ff3f5f",
+            LinesDefault = "#33323e",
+            TableLines = "#33323e",
+            Divider = "#292838",
+            OverlayLight = "#1e1e2d80"
+    }
+    };
+    */
+}

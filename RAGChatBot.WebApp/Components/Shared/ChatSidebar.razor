@@ -1,0 +1,68 @@
+﻿@using MudBlazor
+@inject ChatStateService ChatState
+
+<!-- MudPaper takes up the available space -->
+<MudPaper Elevation="0" Class="pa-4" Style="height: calc(100vh - 80px); display: flex; flex-direction: column; border-radius: 0;">
+    <MudText Typo="Typo.h5" Class="mb-4">Conversations</MudText>
+
+    <!-- Scrollable list -->
+    <div style="flex-grow: 1; overflow-y: auto;">
+        <MudList T="ConversationSummary" Clickable="true" Dense="true">
+            @if (Conversations == null)
+            {
+                <MudListItem>Loading...</MudListItem>
+            }
+            else if (!Conversations.Any())
+            {
+                <MudListItem Class="d-flex flex-column align-center">
+                    <MudText Typo="Typo.body2" Class="mb-4">No conversations found.</MudText>
+                </MudListItem>
+            }
+            else
+            {
+                @foreach (var conv in Conversations)
+                {
+                    <MudListItem @key="conv.ConversationId"
+                                 Selected="conv.ConversationId == SelectedConversation?.ConversationId"
+                                 OnClick="@(() => OnSelectConversation.InvokeAsync(conv.ConversationId))">
+                        <div class="d-flex justify-space-between align-center">
+                            <MudText Typo="Typo.body2">@conv.Title</MudText>
+                            <MudIconButton Icon="@Icons.Material.Filled.Delete"
+                                           Color="Color.Error"
+                                           Size="Size.Small"
+                                           OnClick="@(() => OnDeleteConversation.InvokeAsync(conv.ConversationId))"
+                                           OnClickStopPropagation="true" />
+                        </div>
+                    </MudListItem>
+                }
+            }
+        </MudList>
+    </div>
+</MudPaper>
+
+@code {
+    [Parameter]
+    public List<ConversationSummary> Conversations { get; set; } = new();
+
+    [Parameter]
+    public ConversationDetail? SelectedConversation { get; set; }
+
+    [Parameter]
+    public EventCallback<string> OnSelectConversation { get; set; }
+
+    [Parameter]
+    public EventCallback<string> OnDeleteConversation { get; set; }
+
+    [Parameter]
+    public EventCallback OnNewConversation { get; set; }
+
+    protected override void OnInitialized()
+    {
+        ChatState.OnChange += StateHasChanged;
+    }
+
+    public void Dispose()
+    {
+        ChatState.OnChange -= StateHasChanged;
+    }
+}

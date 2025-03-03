@@ -1,0 +1,109 @@
+﻿html {
+    overflow: hidden; /* Prevents the scrollbar from appearing on the main page */
+}
+
+.code-container {
+    position: relative;
+    margin-bottom: 1rem;
+    padding: 16px;
+    background-color: #1e1e1e;
+    color: #ffffff;
+    border-radius: 6px;
+    font-family: 'Fira Code', monospace;
+    overflow: hidden; /* No scrollbar inside */
+}
+
+/* Code Block */
+.code-block {
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    background: transparent;
+    border: none;
+    padding-right: 50px; /* Ensure space for the Copy button */
+}
+
+/* Copy Button (Stays Inside and Moves Down) */
+.copy-button {
+    position: absolute;
+    right: 20px;
+    top: 20px;
+    background: rgba(255, 255, 255, 0.1);
+    border: none;
+    padding: 6px 10px;
+    cursor: pointer;
+    border-radius: 4px;
+    transition: background 0.3s;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+    .copy-button:hover {
+        background: rgba(255, 255, 255, 0.3);
+    }
+
+/* Ensure Copy Button Moves but Stops at Bottom of Code Block */
+.code-container:hover .copy-button {
+    display: flex;
+}
+
+
+.dark-text {
+    color: #1A1A1A !important; /* Very dark gray to ensure readability */
+}
+
+    .dark-text .mud-typography-body1 {
+        color: #1A1A1A !important; /* Ensure nested typography inherits the dark color */
+    }
+
+    .dark-text .markdown-content {
+        color: #1A1A1A !important; /* Ensure MarkdownRenderer content is dark */
+    }
+
+
+.markdown-content p {
+    margin-bottom: 0 !important; /* Overrides the default paragraph margin */
+}
+
+.mud-card-content {
+    color: #160404;
+}
+
+.markdown-content {
+    color: #160404;
+}
+
+.processing-animation {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.5;
+    }
+
+    100% {
+        opacity: 1;
+    }
+}
+
+/* Ensure dark text is applied (already defined, included for completeness) */
+.dark-text {
+    color: #1A1A1A !important;
+}
+
+    .dark-text .mud-typography-body1 {
+        color: #1A1A1A !important;
+    }
+
+    .dark-text .markdown-content {
+        color: #1A1A1A !important;
+    }
