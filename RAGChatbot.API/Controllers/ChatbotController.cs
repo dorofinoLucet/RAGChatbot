@@ -34,6 +34,9 @@ namespace RAGChatbot.API.Controllers
         }
 
         // POST: /api/Chat?conversationId={conversationId}
+        // This endpoint handles chat requests. It accepts a ChatRequest object and an optional conversationId.
+        // If the conversationId is not provided or not found, a new conversation is created.
+        // The prompt is enriched with context from Azure Search and the response from the chat service is returned.
         [HttpPost]
         public async Task<IActionResult> Post([FromBody] ChatRequest request, [FromQuery] string conversationId = null)
         {
@@ -95,6 +98,8 @@ namespace RAGChatbot.API.Controllers
         }
 
         // GET: /api/Chat/conversations
+        // This endpoint returns a summary of all conversations.
+        // Each summary includes the conversation ID and the title.
         [HttpGet("conversations")]
         public IActionResult GetConversations()
         {
@@ -109,6 +114,8 @@ namespace RAGChatbot.API.Controllers
         }
 
         // GET: /api/Chat/conversations/{conversationId}
+        // This endpoint returns the details of a specific conversation by its ID.
+        // The details include the conversation ID, title, and messages.
         [HttpGet("conversations/{conversationId}")]
         public IActionResult GetConversation(string conversationId)
         {
@@ -125,6 +132,9 @@ namespace RAGChatbot.API.Controllers
         }
 
         // DELETE: /api/Chat/conversations/{conversationId}
+        // This endpoint deletes a specific conversation by its ID.
+        // If the conversation is found and deleted, a success message is returned.
+        // Otherwise, a not found message is returned.
         [HttpDelete("conversations/{conversationId}")]
         public IActionResult DeleteConversation(string conversationId)
         {
