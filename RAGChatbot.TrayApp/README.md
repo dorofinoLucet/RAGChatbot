@@ -15,7 +15,7 @@ RAGChatbot.TrayApp is a Windows tray application that provides quick access to a
 
 1. **Clone the Repository**:
    ```
-   git clone https://github.com/dorofino/RAGChatbot
+   git clone https://github.com/dorofino/RAGChatbot.git
    cd RAGChatbot
    ```
 
