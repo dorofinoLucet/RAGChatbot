@@ -55,7 +55,7 @@ The projects are designed to interoperate seamlessly:
 
 1. **Clone the Repository**:
    ```
-   git clone [https://github.com/dorofino/RAGChatbot.git](https://github.com/dorofino/RAGChatbot.git)
+   git clone https://github.com/dorofino/RAGChatbot.git
    cd RAGChatbot
    ```
 
