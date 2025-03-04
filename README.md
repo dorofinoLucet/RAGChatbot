@@ -1,40 +1,55 @@
+<!-- GitHub Changes Tracking: All modifications to this repository are tracked via GitHub. Please refer to the commit history for detailed changes. -->
+
 # RAG Chatbot Solution
 
-Welcome to the RAG Chatbot solution repository. This repository contains two distinct projects designed to work in tandem to deliver an advanced chatbot experience.
+Welcome to the RAG Chatbot solution repository. This repository contains multiple projects designed to work together to deliver a flexible chatbot experience across different platforms.
 
 ## Overview
 
-This solution is organized into two main projects:
-- **RAGChatbot.API**: Responsible for the chatbot's core functionality, including natural language processing (NLP), response generation, and integration with external APIs.
-- **RAGChatBot.WebApp**: Focused on the front-end interface and user interaction, providing a seamless experience and powerful visualizations.
+This solution is organized into three main projects:
+- **RAGChatbot.API**: The backend engine that implements chatbot functionality. It uses Azure OpenAI for generating responses and Azure Search to enrich user prompts with context, managing complex conversation flows via API endpoints.
+- **RAGChatBot.WebApp**: A web-based frontend built with Blazor and MudBlazor. It provides a responsive user interface for interacting with the chatbot in real time.
+- **RAGChatbot.TrayApp**: A Windows tray application built with WPF. It provides quick access to a mini-chat interface via a system tray icon and hotkeys, loading the mini-chat view using WebView2. This allows users to interact with the chatbot without switching to a browser.
 
-Both projects are built to be modular and scalable, ensuring high performance and ease of maintenance.
+The projects are designed to interoperate seamlessly:
+- The API provides endpoints consumed by both the web application and the tray application.
+- The TrayApp leverages the WebView2 control to load chat interfaces (such as a pared-down version of the WebApp) and supports features like global hotkey toggling (Ctrl+M) for quick access.
 
 ## Projects
 
 ### RAGChatbot.API: Chatbot Engine
-- **Purpose**: Implements the core logic, processing user input and generating contextually relevant responses.
+- **Purpose**: Implements the core logic for processing user input and generating contextually relevant responses by integrating with external services like Azure OpenAI and Azure Search.
 - **Highlights**:
-  - Advanced NLP algorithms and response ranking using Azure OpenAI.
-  - Integration with Azure Search for enriched data.
-  - Scalable and modular architecture.
+  - Context enrichment via Azure Search for tailored responses.
+  - AI-powered response generation using Azure OpenAI.
+  - In-memory management of conversation histories.
 - **Directory**: `./RAGChatbot.API`
 - **Getting Started**:
   1. Navigate to the `RAGChatbot.API` directory.
-  2. Install dependencies using your package manager (e.g., `dotnet restore`).
+  2. Install dependencies (e.g., `dotnet restore`).
   3. Run the application using `dotnet run`.
 
 ### RAGChatBot.WebApp: User Interface
-- **Purpose**: Provides a user-friendly interface for interacting with the chatbot, featuring real-time updates and visual analytics.
+- **Purpose**: Offers a web-based UI for interacting with the chatbot with a modern look and real-time updates.
 - **Highlights**:
-  - Responsive design for optimal performance on various devices.
-  - Integration with the Chatbot Engine to display real-time responses.
-  - Clean and modern user interface built with Blazor and MudBlazor.
+  - Built with Blazor and MudBlazor for responsiveness and simplicity.
+  - Consumes API endpoints to display conversations and process new messages.
 - **Directory**: `./RAGChatBot.WebApp`
 - **Getting Started**:
   1. Navigate to the `RAGChatBot.WebApp` directory.
-  2. Install the required dependencies using `dotnet restore`.
-  3. Start the front-end server using `dotnet run`.
+  2. Install dependencies (e.g., `dotnet restore`).
+  3. Start the application using `dotnet run`.
+
+### RAGChatbot.TrayApp: Quick Access Tray Application
+- **Purpose**: Provides a lightweight, always-accessible chat interface through the system tray.
+- **Highlights**:
+  - Built with WPF, featuring a system tray icon and global hotkey support (Ctrl+M) to toggle the chat window.
+  - Uses WebView2 to load a mini-chat interface, allowing quick interactions without opening a full browser.
+- **Directory**: `./RAGChatbot.TrayApp`
+- **Getting Started**:
+  1. Navigate to the `RAGChatbot.TrayApp` directory.
+  2. Install dependencies (e.g., `dotnet restore`).
+  3. Run the application using `dotnet run`.
 
 ## Installation and Setup
 
@@ -45,18 +60,20 @@ Both projects are built to be modular and scalable, ensuring high performance an
    ```
 
 2. **Setup RAGChatbot.API**:
-   - Follow the instructions in the `./RAGChatbot.API/README.md`.
+   - Follow the instructions in `./RAGChatbot.API/README.md`.
 
 3. **Setup RAGChatBot.WebApp**:
-   - Follow the instructions in the `./RAGChatBot.WebApp/README.md`.
+   - Follow the instructions in `./RAGChatBot.WebApp/README.md`.
+
+4. **Setup RAGChatbot.TrayApp**:
+   - Follow the instructions in `./RAGChatbot.TrayApp/README.md`.
 
 ## Usage
 
-After setting up both projects, run them concurrently (if required):
-- **RAGChatbot.API (Backend)**: Ensure it is running to process and generate responses.
-- **RAGChatBot.WebApp (Frontend)**: Launch the interface to interact with the chatbot.
-
-Integration between the projects is handled via API endpoints defined in RAGChatbot.API and consumed by RAGChatBot.WebApp.
+After setting up all projects, run them concurrently or as needed:
+- **Backend (RAGChatbot.API)**: Ensure it is running to handle chatbot logic and interactions.
+- **Frontend (RAGChatBot.WebApp)**: Launch the web interface for full-featured chatbot interactions.
+- **Tray Application (RAGChatbot.TrayApp)**: Use the tray application for quick access to a mini-chat window. Use the global hotkey (Ctrl+M) or double-click the tray icon to toggle its visibility.
 
 ## Contributing
 
@@ -73,4 +90,4 @@ Distributed under the MIT License. See `LICENSE` for more information.
 ## Acknowledgments
 
 - Special thanks to the contributors of each project.
-- Inspired by current trends in AI and conversational interfaces.
+- Inspired by current trends in AI, conversational interfaces, and multi-platform integration.
