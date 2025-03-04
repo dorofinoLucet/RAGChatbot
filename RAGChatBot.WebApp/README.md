@@ -16,7 +16,7 @@ RAGChatBot.WebApp is a web application that provides a user interface for intera
 ## Installation
 1. Clone this repository.
     ```sh
-    git clone https://github.com/yourusername/RAGChatBot.WebApp.git
+    git clone https://github.com/dorofino/RAGChatBot.WebApp.git
     ```
 2. Navigate to the project folder.
     ```sh

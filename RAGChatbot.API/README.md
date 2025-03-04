@@ -15,7 +15,7 @@ RAGChatbot.API is a RESTful service that provides Retrieval-Augmented Generation
 ## Installation
 1. Clone this repository.
     ```sh
-    git clone https://github.com/yourusername/RAGChatbot.API.git
+    git clone https://github.com/dorofino/RAGChatbot.API.git
     ```
 2. Navigate to the project folder.
     ```sh
