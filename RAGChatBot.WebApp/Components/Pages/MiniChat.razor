@@ -2,6 +2,7 @@
 @layout Layout.MiniChatLayout
 @using System.Net.Http.Json
 @using MudBlazor
+@inject IConfiguration Configuration
 @inject HttpClient Http
 @inject IJSRuntime JS
 
@@ -69,10 +70,12 @@
     private bool _shouldScrollToBottom = false;
     private List<Message> Messages { get; set; } = new();
     private string? ConversationId { get; set; }
+    private string apiUrl;
 
     protected override async Task OnInitializedAsync()
     {
         ConversationId = Guid.NewGuid().ToString();
+        apiUrl = Configuration["ApiSettings:ChatbotApiUrl"];
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -112,8 +115,7 @@
         Messages.Add(new Message { Text = messageToSend, Sender = "You" });
         StateHasChanged();
         _shouldScrollToBottom = true;
-
-        string apiUrl = "https://localhost:7066/api/Chatbot";
+         
         apiUrl += $"?conversationId={ConversationId}";
 
         try

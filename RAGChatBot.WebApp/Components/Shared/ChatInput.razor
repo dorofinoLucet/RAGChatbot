@@ -1,0 +1,28 @@
+﻿@using MudBlazor
+<MudTextField @ref="chatInputField"
+              Value="@UserMessage"
+              ValueChanged="@UserMessageChanged"
+              TextUpdateSuppression="false"
+              Clearable="true"
+              Adornment="Adornment.End"
+              Placeholder="Type your message and press Enter..."
+              Variant="Variant.Outlined"
+              Margin="Margin.Dense"
+              Immediate="true"
+              Disabled="IsProcessing"
+              OnKeyDown="@OnEnterKey" />
+
+
+@code {
+    [Parameter] public string UserMessage { get; set; } = string.Empty;
+    [Parameter] public EventCallback<string> UserMessageChanged { get; set; }
+    [Parameter] public bool IsProcessing { get; set; }
+    [Parameter] public EventCallback<KeyboardEventArgs> OnEnterKey { get; set; }
+
+    private MudTextField<string> chatInputField;
+
+    public async Task FocusAsync()
+    {
+        await chatInputField.FocusAsync();
+    }
+}
