@@ -6,7 +6,7 @@
         xmlns:notifyIcon="clr-namespace:Hardcodet.Wpf.TaskbarNotification;assembly=Hardcodet.NotifyIcon.Wpf"
         xmlns:wpf="clr-namespace:Microsoft.Web.WebView2.Wpf;assembly=Microsoft.Web.WebView2.Wpf"
         mc:Ignorable="d"
-        Title="Mini Chat Wrapper" 
+        Title="M360 AI Chatbot" 
         Height="600" 
         Width="800"
         ShowInTaskbar="False"

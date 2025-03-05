@@ -1,11 +1,10 @@
-﻿using Azure.Search.Documents.Models;
-using Azure.Search.Documents;
-using Microsoft.AspNetCore.Http;
+﻿using Azure.Search.Documents;
+using Azure.Search.Documents.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.SemanticKernel.ChatCompletion;
+using RAGChatbot.API.Models;
 using System.Collections.Concurrent;
 using System.Text;
-using RAGChatbot.API.Models;
 
 namespace RAGChatbot.API.Controllers
 {

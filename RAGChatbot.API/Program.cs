@@ -1,9 +1,7 @@
 using Azure;
 using Azure.Search.Documents;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.ChatCompletion;
-using Microsoft.SemanticKernel.Connectors.AzureOpenAI;
 using RAGChatbot.API.Models;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -41,10 +39,19 @@ string indexName = azureSearchConfig["IndexName"];
 int topK = int.Parse(azureSearchConfig["TopK"]);
 string searchEndpoint = $"https://{searchServiceName}.search.windows.net/";
 
-// Configure the Semantic Kernel.
+// Create a custom HttpClientHandler to bypass certificate validation (development only)
+var handler = new HttpClientHandler
+{
+    ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator
+};
+
+// Create a custom HttpClient using the handler
+var httpClient = new HttpClient(handler);
+
+// Configure the Semantic Kernel with the custom HttpClient
 var kernelBuilder = Kernel.CreateBuilder();
-kernelBuilder.Services.AddLogging(); // re-use logging configuration if needed.
-kernelBuilder.AddAzureOpenAIChatCompletion(modelId, openAiEndpoint, openAiApiKey);
+kernelBuilder.Services.AddLogging(); // reuse logging configuration if needed.
+kernelBuilder.AddAzureOpenAIChatCompletion(modelId, openAiEndpoint, openAiApiKey, httpClient: httpClient);
 var kernel = kernelBuilder.Build();
 
 // Retrieve the chat completion service and register it.
@@ -70,6 +77,13 @@ if (app.Environment.IsDevelopment())
         c.RoutePrefix = string.Empty; // Serve Swagger UI at the app's root
     });
 }
+
+app.UseSwagger();
+app.UseSwaggerUI(c =>
+{
+    c.SwaggerEndpoint("/swagger/v1/swagger.json", "ChatBot API V1");
+    c.RoutePrefix = string.Empty; // Serve Swagger UI at the app's root
+});
 
 // Enable CORS before other middlewares
 app.UseCors();
