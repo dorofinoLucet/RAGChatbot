@@ -3,6 +3,9 @@
     public class ChatStateService
     {
         private readonly HttpClient _httpClient;
+        private readonly SemaphoreSlim _stateChangeLock = new(1, 1);
+        private DateTime _lastStateChange = DateTime.MinValue;
+        private const int MinUpdateIntervalMs = 100; // Throttle updates to max 10 per second
 
         public ChatStateService(HttpClient httpClient)
         {
@@ -14,21 +17,35 @@
 
         public event Action? OnChange;
 
-        public void SetConversationSummaries(List<ConversationSummary> summaries)
+        public async Task SetConversationSummaries(List<ConversationSummary> summaries)
         {
             ConversationSummaries = summaries ?? new List<ConversationSummary>();
-            NotifyStateChanged();
+            await NotifyStateChanged();
         }
 
-        public void SetSelectedConversation(ConversationDetail conversation)
+        public async Task SetSelectedConversation(ConversationDetail conversation)
         {
             SelectedConversation = conversation;
-            NotifyStateChanged();
+            await NotifyStateChanged();
         }
 
-        public void NotifyStateChanged()
+        public async Task NotifyStateChanged()
         {
-            OnChange?.Invoke();
+            await _stateChangeLock.WaitAsync();
+            try
+            {
+                var now = DateTime.UtcNow;
+                if ((now - _lastStateChange).TotalMilliseconds < MinUpdateIntervalMs)
+                {
+                    await Task.Delay(MinUpdateIntervalMs);
+                }
+                _lastStateChange = DateTime.UtcNow;
+                OnChange?.Invoke();
+            }
+            finally
+            {
+                _stateChangeLock.Release();
+            }
         }
 
         public async Task LoadConversationsAsync()
@@ -38,7 +55,7 @@
                 var summaries = await _httpClient.GetFromJsonAsync<List<ConversationSummary>>("https://localhost:7233/api/Chat/conversations");
                 if (summaries != null)
                 {
-                    SetConversationSummaries(summaries);
+                    await SetConversationSummaries(summaries);
                 }
             }
             catch (Exception ex)
@@ -56,7 +73,7 @@
                 {
                     Console.WriteLine($"Fetched conversation: {conversation.ConversationId}, Messages count: {conversation.Messages?.Count ?? 0}");
                     SelectedConversation = conversation;
-                    NotifyStateChanged();
+                    await NotifyStateChanged();
                 }
             }
             catch (Exception ex)
@@ -79,7 +96,7 @@
                 Title = newConversation.Title,
                 Messages = new List<Message>()
             };
-            NotifyStateChanged();
+            await NotifyStateChanged();
         }
 
         public async Task DeleteConversation(string conversationId)
@@ -89,7 +106,7 @@
             {
                 SelectedConversation = null;
             }
-            NotifyStateChanged();
+            await NotifyStateChanged();
         }
     }
 

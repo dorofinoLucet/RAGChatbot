@@ -2,8 +2,6 @@
 using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Input;
-using Microsoft.Web.WebView2.Wpf;
-using Hardcodet.Wpf.TaskbarNotification;
 using System.Windows.Interop;
 
 namespace RAGChatbot.TrayApp
@@ -49,7 +47,7 @@ namespace RAGChatbot.TrayApp
             {
                 if (e.IsSuccess)
                 {
-                    webView2MiniChat.CoreWebView2.Navigate("https://localhost:7043/mini-chat");
+                    webView2MiniChat.CoreWebView2.Navigate("https://m360-ai-rag-chatbot-dmf4dbfef0hmcfag.eastus-01.azurewebsites.net/mini-chat");
                 }
                 else
                 {

@@ -1,16 +1,24 @@
 ﻿@inherits LayoutComponentBase
 @using MudBlazor
+@inject ChatStateService ChatState
 
-<!-- Minimal layout with White Angel healthcare theme -->
-<MudThemeProvider Theme="@_theme" IsDarkMode="false" />
+
+<MudThemeProvider Theme="@_theme" IsDarkMode="@_isDarkMode" />
 <MudPopoverProvider />
 <MudDialogProvider />
 <MudSnackbarProvider />
 
 <MudLayout>
-    <MudAppBar Elevation="1" Style="background-color: #FFFFFF;">
-        <MudText Typo="Typo.h6" Class="ml-3" Style="color: #1A1A1A;">M360 AI Chatbot</MudText>
+    <MudAppBar Elevation="1">
+        <MudButton Variant="Variant.Filled"
+                   Color="Color.Primary"
+                   Class="mr-3"
+                   OnClick="@(async () => await ChatState.HandleNewConversation())">
+            New
+        </MudButton>
+        <MudText Typo="Typo.h6" Class="ml-3">M360 AI Chatbot</MudText>
         <MudSpacer />
+        <MudIconButton Icon="@DarkLightModeButtonIcon" Color="Color.Inherit" OnClick="@DarkModeToggle" />
     </MudAppBar>
 </MudLayout>
 
@@ -19,6 +27,7 @@
 </div>
 
 @code {
+    private bool _isDarkMode = false;
     // Updated White Angel theme (light mode) with softer conversation colors and good contrast
     private MudTheme _theme = new MudTheme
         {
@@ -31,6 +40,7 @@
                 Surface = "#FFFFFF",         // Pure white surfaces for cards, etc.
                 AppbarBackground = "#FFFFFF", // Clean white app bar background
                 AppbarText = "#1A1A1A",      // Very dark gray for app bar text
+                PrimaryContrastText = "#1A1A1A",
                 TextPrimary = "#1A1A1A",     // Very dark gray for main text (improved contrast)
                 TextSecondary = "#333333",   // Darker gray for secondary text
                 TextDisabled = "#9E9E9E",    // Disabled text with enough contrast
@@ -50,6 +60,38 @@
                 OverlayLight = "rgba(255, 255, 255, 0.8)" // Light overlay with higher opacity
             }
         };
+
+    protected override void OnInitialized()
+    {
+        ChatState.OnChange += StateHasChanged;
+    }
+
+    public void Dispose()
+    {
+        ChatState.OnChange -= StateHasChanged;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        // If there's no active conversation, create a new one.
+        if ((ChatState.ConversationSummaries == null || !ChatState.ConversationSummaries.Any())
+            && ChatState.SelectedConversation == null)
+        {
+            await ChatState.HandleNewConversation();
+        } 
+    }
+
+    private void DarkModeToggle()
+    {
+        _isDarkMode = !_isDarkMode;
+    }
+
+    public string DarkLightModeButtonIcon => _isDarkMode switch
+    {
+        true => Icons.Material.Rounded.AutoMode,
+        false => Icons.Material.Outlined.DarkMode
+    };
+
 
     // Original dark theme (commented out as a backup)
     /*

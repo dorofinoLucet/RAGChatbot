@@ -1,28 +1,33 @@
 ﻿@page "/mini-chat"
+@page "/mini-chat/{m}"
 @layout Layout.MiniChatLayout
 @using System.Net.Http.Json
 @using MudBlazor
+@using RAGChatBot.WebApp.Services
+
 @inject IConfiguration Configuration
 @inject HttpClient Http
 @inject IJSRuntime JS
+@inject ChatStateService ChatState
+@inject NavigationManager Navigation
 
 <PageTitle>Mini Chat</PageTitle>
 
 <MudPaper Elevation="2" Style="width: 100%; display: flex; flex-direction: column; background-color: var(--mud-palette-background-gray); height: calc(100vh - 145px);">
-    <!-- Chat content scrolls, takes available space -->
     <MudPaper id="chatContainer" Class="pa-4" Style="flex: 1; overflow-y: auto; scrollbar-width: thin; scrollbar-color: #555 #1a1a27;" Elevation="1">
-        @if (Messages == null || !Messages.Any())
+        @if (ChatState.SelectedConversation == null || ChatState.SelectedConversation.Messages == null || !ChatState.SelectedConversation.Messages.Any())
+
         {
             <MudText Color="Color.Default" Align="Align.Center">Start a conversation below!</MudText>
         }
         else
         {
-            @foreach (var message in Messages.TakeLast(50))
+            @foreach (var message in ChatState.SelectedConversation.Messages.TakeLast(50)) 
+
             {
                 bool isUserMessage = message.Sender == "You";
                 <MudCard Class="@(isUserMessage ? "mb-3 mud-theme-primary" : "mb-3 mud-theme-secondary")" Elevation="2">
                     <MudCardContent Class="dark-text">
-                        <!-- Custom class to enforce dark text -->
                         @if (isUserMessage)
                         {
                             <MudText Typo="Typo.body1">@((MarkupString)message.Text)</MudText>
@@ -50,39 +55,83 @@
             }
         }
     </MudPaper>
-    <!-- Text field sticks to the bottom -->
     <div style="position: absolute; bottom: 16px; left: 16px; right: 16px;">
-        <MudTextField @ref="chatInputField" Id="chatInput" @bind-Value="UserMessage" TextUpdateSuppression="false" Clearable="true"
-                      Adornment="Adornment.End"
-                      Placeholder="Type your message and press Enter..."
-                      Variant="Variant.Outlined"
-                      Margin="Margin.Dense"
-                      Immediate="true"
-                      Disabled="@IsProcessing"
-                      OnKeyDown="@((e) => HandleKeyPress(e))" />
+        <MudTextField @ref="chatInputField" 
+                     Id="chatInput" 
+                     @bind-Value="UserMessage"
+                     TextUpdateSuppression="true"
+                     DebounceInterval="50"
+                     Clearable="true"
+                     Adornment="Adornment.End"
+                     Placeholder="Type your message and press Enter..."
+                     Variant="Variant.Outlined"
+                     Margin="Margin.Dense"
+                     Immediate="true"
+                     Disabled="@IsProcessing"
+                     OnKeyDown="@HandleKeyPress" />
     </div>
 </MudPaper>
 
 @code {
-    private MudTextField<string> chatInputField; // Reference to the text field
-    public string UserMessage { get; set; } = string.Empty;
-    public bool IsProcessing { get; set; } = false;
+    [Parameter]
+    public string m { get; set; }
+
+    private MudTextField<string> chatInputField;
+    private string UserMessage { get; set; } = string.Empty;
+    private bool IsProcessing { get; set; } = false;
+
     private bool _shouldScrollToBottom = false;
-    private List<Message> Messages { get; set; } = new();
-    private string? ConversationId { get; set; }
     private string apiUrl;
+
+    protected override void OnInitialized()
+    {
+        ChatState.OnChange += StateHasChanged;
+        apiUrl = Configuration["ApiSettings:ChatbotApiUrl"];
+    }
 
     protected override async Task OnInitializedAsync()
     {
-        ConversationId = Guid.NewGuid().ToString();
-        apiUrl = Configuration["ApiSettings:ChatbotApiUrl"];
+        await ChatState.LoadConversationsAsync();
+        if (ChatState.ConversationSummaries.Any())
+        {
+            await ChatState.SelectConversation(ChatState.ConversationSummaries.First().ConversationId);
+        }
+        else
+        {
+            await ChatState.HandleNewConversation();
+        }
+
+        // Handle route parameter first
+        if (!string.IsNullOrEmpty(m))
+        {
+            UserMessage = m;
+            await HandleSendMessageAsync(UserMessage);
+            return;
+        }
+
+        // Check if there is a message in the URL query parameter
+        var uri = new Uri(Navigation.Uri);
+        var query = Microsoft.AspNetCore.WebUtilities.QueryHelpers.ParseQuery(uri.Query);
+        if (query.TryGetValue("m", out var message))
+        {
+            IsProcessing = true;
+            try
+            {
+                await HandleSendMessageAsync(message);
+            }
+            finally
+            {
+                IsProcessing = false;
+                await InvokeAsync(StateHasChanged);
+            }
+        }
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (firstRender)
         {
-            await chatInputField.FocusAsync(); // Focus on first render
+            await chatInputField.FocusAsync();
         }
         if (_shouldScrollToBottom)
         {
@@ -91,32 +140,54 @@
         }
     }
 
+    public void Dispose()
+    {
+        ChatState.OnChange -= StateHasChanged;
+    }
+
     private async Task HandleKeyPress(KeyboardEventArgs e)
     {
-        if (e.Key == "Enter" && !string.IsNullOrWhiteSpace(UserMessage))
+        if (e.Key != "Enter" || string.IsNullOrWhiteSpace(UserMessage) || IsProcessing)
+            return;
+
+        var messageToSend = UserMessage.Trim();
+        UserMessage = string.Empty;
+        IsProcessing = true;
+        
+        try 
         {
-            var messageToSend = UserMessage;
-            UserMessage = string.Empty;
-            IsProcessing = true;
-            StateHasChanged();
             await HandleSendMessageAsync(messageToSend);
+        }
+        finally 
+        {
+            await InvokeAsync(StateHasChanged);
         }
     }
 
     private async Task HandleSendMessageAsync(string messageToSend)
     {
-        if (ConversationId == null)
+        if (ChatState.SelectedConversation == null)
         {
             IsProcessing = false;
             return;
         }
 
-        // Add user message
-        Messages.Add(new Message { Text = messageToSend, Sender = "You" });
-        StateHasChanged();
-        _shouldScrollToBottom = true;
-         
-        apiUrl += $"?conversationId={ConversationId}";
+        // Batch state updates
+        await Task.Run(async () => 
+        {
+            ChatState.SelectedConversation.Messages.Add(new Message { Text = messageToSend, Sender = "You" });
+            await InvokeAsync(() => 
+            {
+                ChatState.NotifyStateChanged();
+                _shouldScrollToBottom = true;
+            });
+        });
+
+        var tempId = ChatState.SelectedConversation.ConversationId;
+        if (!string.IsNullOrEmpty(tempId))
+        {
+            apiUrl += $"?conversationId={tempId}";
+        }
 
         try
         {
@@ -126,34 +197,55 @@
                 var chatResponse = await response.Content.ReadFromJsonAsync<ChatResponse>();
                 if (chatResponse != null && !string.IsNullOrEmpty(chatResponse.Response))
                 {
-                    // Create an empty bot message for the typing effect.
+                    // Update conversation ID and title if needed
+                    if (ChatState.SelectedConversation.ConversationId != chatResponse.ConversationId)
+                    {
+                        ChatState.SelectedConversation.ConversationId = chatResponse.ConversationId;
+                        var summary = ChatState.ConversationSummaries.FirstOrDefault(c => c.ConversationId == tempId);
+                        if (summary != null)
+                        {
+                            summary.ConversationId = chatResponse.ConversationId;
+                        }
+                    }
+
+                    if (string.IsNullOrWhiteSpace(ChatState.SelectedConversation.Title))
+                    {
+                        ChatState.SelectedConversation.Title = messageToSend.Length > 50 
+                            ? messageToSend.Substring(0, 50) + "..." 
+                            : messageToSend;
+                    }
+
+                    // Add bot response with typing effect
                     var botMessage = new Message { Text = "", Sender = "Bot" };
-                    Messages.Add(botMessage);
-                    StateHasChanged();
+                    ChatState.SelectedConversation.Messages.Add(botMessage);
+                    ChatState.NotifyStateChanged();
                     _shouldScrollToBottom = true;
 
-                    // Simulate typing effect by appending characters in batches.
-                    for (int i = 0; i < chatResponse.Response.Length; i += 3)
+                    // Simulate typing effect
+                    for (int i = 0; i < chatResponse.Response.Length; i += 15)
                     {
-                        botMessage.Text += chatResponse.Response.Substring(i, Math.Min(3, chatResponse.Response.Length - i));
-                        StateHasChanged();
+                        botMessage.Text += chatResponse.Response.Substring(i, Math.Min(15, chatResponse.Response.Length - i));
+                        ChatState.NotifyStateChanged();
                         await ScrollToBottom();
-                        await Task.Delay(1); // Increased delay for better animation visibility
+                        await Task.Delay(1);
                     }
-                    ConversationId = chatResponse.ConversationId;
                 }
             }
         }
         catch (Exception ex)
         {
-            Messages.Add(new Message { Text = $"Error: {ex.Message}. Check your connection.", Sender = "Bot" });
+            ChatState.SelectedConversation.Messages.Add(new Message 
+            { 
+                Text = $"Error: {ex.Message}. Check your connection.", 
+                Sender = "Bot" 
+            });
         }
         finally
         {
             IsProcessing = false;
-            StateHasChanged();
+            ChatState.NotifyStateChanged();
             _shouldScrollToBottom = true;
-            await chatInputField.FocusAsync(); // Focus after processing
+            await chatInputField.FocusAsync();
         }
     }
 
@@ -162,13 +254,7 @@
         await JS.InvokeVoidAsync("scrollChatToBottom", "chatContainer");
     }
 
-    public class Message
-    {
-        public string Text { get; set; } = string.Empty;
-        public string Sender { get; set; } = string.Empty;
-    }
-
-    public class ChatResponse
+    private class ChatResponse
     {
         public string ConversationId { get; set; } = string.Empty;
         public string Response { get; set; } = string.Empty;

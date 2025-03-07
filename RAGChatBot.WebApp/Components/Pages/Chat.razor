@@ -1,4 +1,5 @@
-﻿@page "/"
+﻿@page "/" 
+@page "/{m}"
 @inherits ComponentBase
 @layout Layout.MainLayout
 @using RAGChatBot.WebApp.Services
@@ -9,6 +10,7 @@
 @inject HttpClient Http
 @inject IJSRuntime JS
 @inject ChatStateService ChatState
+@inject NavigationManager Navigation
 
 <PageTitle>Chatbot</PageTitle>
 
@@ -62,18 +64,25 @@
     </MudPaper>
     <!-- Place the ChatInput component in a container fixed at the bottom -->
     <div style="position: absolute; bottom: 16px; left: 16px; right: 16px;">
-        <ChatInput UserMessage="@UserMessage"
-                   UserMessageChanged="@(val => UserMessage = val)"
-                   IsProcessing="@IsProcessing"
-                   OnEnterKey="HandleKeyPress"
-                   @ref="chatInputComponent" />
+        <MudTextField @ref="chatInputComponent" 
+                      @bind-Value="@UserMessage"
+                      TextUpdateSuppression="true"
+                      Immediate="true"
+                      DebounceInterval="50"
+                      Variant="Variant.Outlined"
+                      Placeholder="Type your message and press Enter..."
+                      Disabled="@IsProcessing"
+                      OnKeyDown="@HandleKeyPress" />
     </div>
 
 </MudPaper>
 
 @code {
+    [Parameter]
+    public string m { get; set; }
+
     // This reference is for focusing the input when needed.
-    private ChatInput chatInputComponent;
+    private MudTextField<string> chatInputComponent;
     public string UserMessage { get; set; } = string.Empty;
     public bool IsProcessing { get; set; } = false;
     private bool _shouldScrollToBottom = false;
@@ -95,6 +104,23 @@
         else
         {
             await ChatState.HandleNewConversation();
+        }
+
+        // Check if there is a message in the URL query parameter
+        var uri = new Uri(Navigation.Uri);
+        var query = Microsoft.AspNetCore.WebUtilities.QueryHelpers.ParseQuery(uri.Query);
+        if (query.TryGetValue("m", out var message))
+        { 
+            IsProcessing = true;
+            try
+            {
+                await HandleSendMessageAsync(message);
+            }
+            finally
+            {
+                IsProcessing = false;
+                await InvokeAsync(StateHasChanged);
+            }
         }
     }
 
@@ -119,16 +145,22 @@
 
     private async Task HandleKeyPress(KeyboardEventArgs e)
     {
-        if (e.Key == "Enter" && !string.IsNullOrWhiteSpace(UserMessage))
+        if (e.Key != "Enter" || string.IsNullOrWhiteSpace(UserMessage) || IsProcessing)
+            return;
+
+        var messageToSend = UserMessage.Trim();
+        UserMessage = string.Empty;
+        IsProcessing = true;
+        
+        try 
         {
-            var messageToSend = UserMessage;
-            UserMessage = string.Empty;
-            IsProcessing = true;
-            StateHasChanged();
             await HandleSendMessageAsync(messageToSend);
         }
+        finally 
+        {
+            await InvokeAsync(StateHasChanged);
+        }
     }
-
 
     private async Task HandleSendMessageAsync(string messageToSend)
     {
@@ -138,11 +170,17 @@
             return;
         }
 
-        // Add user message.
-        ChatState.SelectedConversation.Messages.Add(new Message { Text = messageToSend, Sender = "You" });
-        ChatState.NotifyStateChanged();
-        _shouldScrollToBottom = true;
-         
+        // Batch state updates
+        await Task.Run(async () => 
+        {
+            ChatState.SelectedConversation.Messages.Add(new Message { Text = messageToSend, Sender = "You" });
+            await InvokeAsync(() => 
+            {
+                ChatState.NotifyStateChanged();
+                _shouldScrollToBottom = true;
+            });
+        });
+
         var tempId = ChatState.SelectedConversation.ConversationId; // Capture temporary ID.
         if (!string.IsNullOrEmpty(tempId))
         {
@@ -179,34 +217,6 @@
                     ChatState.SelectedConversation.Messages.Add(botMessage);
                     ChatState.NotifyStateChanged();
                     _shouldScrollToBottom = true;
-
-                    // Optimized typing effect: line-by-line with fallback for short responses.
-                    // var lines = chatResponse.Response.Split('\n');
-                    // if (chatResponse.Response.Length < 100)
-                    // {
-                    //     botMessage.Text = chatResponse.Response;
-                    //     ChatState.NotifyStateChanged();
-                    //     await ScrollToBottom();
-                    // }
-                    // else
-                    // {
-                    //     int delayMs = IsLocalhost() ? 100 : 200;
-                    //     var sb = new StringBuilder();
-                    //     int batchSize = 3; update every 3 lines
-                    //     for (int i = 0; i < lines.Length; i++)
-                    //     {
-                    //         sb.AppendLine(lines[i]);
-                    //         Update every few lines or on the last iteration
-                    //         if ((i + 1) % batchSize == 0 || i == lines.Length - 1)
-                    //         {
-                    //             botMessage.Text = sb.ToString();
-                    //             ChatState.NotifyStateChanged();
-                    //             await ScrollToBottom();
-                    //             await Task.Delay(delayMs);
-                    //         }
-                    //     }
-                    // }
-                     
 
                     // Simulate typing effect by appending characters in batches.
                     for (int i = 0; i < chatResponse.Response.Length; i += 15)
