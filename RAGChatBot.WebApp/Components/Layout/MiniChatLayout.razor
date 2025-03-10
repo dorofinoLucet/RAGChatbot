@@ -17,6 +17,9 @@
             New
         </MudButton>
         <MudText Typo="Typo.h6" Class="ml-3">M360 AI Chatbot</MudText>
+        <MudSelect T="int" AdornmentColor="Color.Primary"  Class="ml-3" @bind-Value="_selectedOption">
+            <MudSelectItem  Value="1">BMS</MudSelectItem>
+        </MudSelect>
         <MudSpacer />
         <MudIconButton Icon="@DarkLightModeButtonIcon" Color="Color.Inherit" OnClick="@DarkModeToggle" />
     </MudAppBar>
@@ -27,6 +30,7 @@
 </div>
 
 @code {
+    private int _selectedOption = 1;
     private bool _isDarkMode = false;
     // Updated White Angel theme (light mode) with softer conversation colors and good contrast
     private MudTheme _theme = new MudTheme

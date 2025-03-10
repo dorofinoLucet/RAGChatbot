@@ -2,6 +2,10 @@
     overflow: hidden; /* Prevents the scrollbar from appearing on the main page */
 }
 
+.mud-list-item-text {
+    color: #1A1A1A !important;
+}
+
 .code-container {
     position: relative;
     margin-bottom: 1rem;
@@ -107,3 +111,68 @@
     .dark-text .markdown-content {
         color: #1A1A1A !important;
     }
+
+
+.quick-questions-menu {
+    background-color: var(--mud-palette-background);
+    transition: width 0.3s ease-in-out;
+    overflow: hidden;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    z-index: 1; /* Ensure menu stays above chat */
+}
+
+    .quick-questions-menu.collapsed {
+        width: 50px;
+    }
+
+    .quick-questions-menu.expanded {
+        width: 270px;
+    }
+
+/* Add styles for dark theme button hover states */
+.quick-questions-menu .mud-button:hover {
+    background-color: var(--mud-palette-action-default-hover);
+}
+
+.toggle-button {
+.toggle-button {
+    width: 100%;
+    height: 50px;
+    border-radius: 0;
+    justify-content: left !important;
+}
+
+.questions-list {
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 5px; 
+    flex: 1;
+    text-align: left !important;
+    width: 100%; /* Ensure full width */
+}
+
+.questions-list .mud-button {
+    justify-content: flex-start !important;
+    text-align: left !important;
+    width: 100%; /* Make buttons take full width */
+    padding-left: 8px; /* Add some padding for better appearance */
+}
+
+.chat-wrapper {
+    flex: 1;
+    transition: all 0.3s ease-in-out;
+    width: 100%;
+    position: relative;
+}
+
+    .chat-wrapper.menu-expanded {
+        margin-left: 0;
+    }
+
+.chat-input-wrapper {
+    background-color: var(--mud-palette-background-gray);
+    transition: all 0.3s ease-in-out;
+}

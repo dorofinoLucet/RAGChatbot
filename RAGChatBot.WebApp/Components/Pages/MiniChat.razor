@@ -13,64 +13,86 @@
 
 <PageTitle>Mini Chat</PageTitle>
 
-<MudPaper Elevation="2" Style="width: 100%; display: flex; flex-direction: column; background-color: var(--mud-palette-background-gray); height: calc(100vh - 145px);">
-    <MudPaper id="chatContainer" Class="pa-4" Style="flex: 1; overflow-y: auto; scrollbar-width: thin; scrollbar-color: #555 #1a1a27;" Elevation="1">
-        @if (ChatState.SelectedConversation == null || ChatState.SelectedConversation.Messages == null || !ChatState.SelectedConversation.Messages.Any())
-
+<div class="d-flex" Style="width: 100%; height: calc(100vh - 71px);">
+    <!-- Collapsible Menu -->
+    <div class="quick-questions-menu @(isMenuExpanded ? "expanded" : "collapsed")">
+        <MudButton Class="toggle-button" OnClick="ToggleMenu">
+            <MudIcon Class="ms-1" Icon="@(isMenuExpanded ? Icons.Material.Filled.MenuOpen : Icons.Material.Filled.Menu)" />
+        </MudButton>
+        @if (isMenuExpanded)
         {
-            <MudText Color="Color.Default" Align="Align.Center">Start a conversation below!</MudText>
+            <div class="questions-list">
+                @foreach (var question in predefinedQuestions)
+                {
+                    <MudButton Class="text-start text-wrap" 
+                      Style="justify-content: flex-start; text-align: left;" 
+                      Variant="Variant.Text"
+                      OnClick="() => SendPredefinedQuestion(question)">
+                        @question
+                    </MudButton>
+                }
+            </div>
         }
-        else
-        {
-            @foreach (var message in ChatState.SelectedConversation.Messages.TakeLast(50)) 
+    </div>
 
+    <!-- Chat Container -->
+    <MudPaper Elevation="2" Class="@(isMenuExpanded ? "chat-wrapper menu-expanded" : "chat-wrapper")" Style="width:100%; display: flex; flex-direction: column; background-color: var(--mud-palette-background-gray);">
+        <MudPaper id="chatContainer" Class="pa-4" Style="flex: 1; overflow-y: auto; scrollbar-width: thin; scrollbar-color: #555 #1a1a27;margin-bottom: 2px;" Elevation="1">
+            @if (ChatState.SelectedConversation == null || ChatState.SelectedConversation.Messages == null || !ChatState.SelectedConversation.Messages.Any())
             {
-                bool isUserMessage = message.Sender == "You";
-                <MudCard Class="@(isUserMessage ? "mb-3 mud-theme-primary" : "mb-3 mud-theme-secondary")" Elevation="2">
-                    <MudCardContent Class="dark-text">
-                        @if (isUserMessage)
-                        {
-                            <MudText Typo="Typo.body1">@((MarkupString)message.Text)</MudText>
-                        }
-                        else
-                        {
-                            @if (string.IsNullOrEmpty(message.Text))
+                <MudText Color="Color.Default" Align="Align.Center">Start a conversation below!</MudText>
+            }
+            else
+            {
+                @foreach (var message in ChatState.SelectedConversation.Messages.TakeLast(50))
+                {
+                    bool isUserMessage = message.Sender == "You";
+                    <MudCard Class="@(isUserMessage ? "mb-3 mud-theme-primary" : "mb-3 mud-theme-secondary")" Elevation="2">
+                        <MudCardContent Class="dark-text">
+                            @if (isUserMessage)
                             {
-                                <MudText Color="Color.Error">No bot response received. Please try again.</MudText>
+                                <MudText Typo="Typo.body1">@((MarkupString)message.Text)</MudText>
                             }
                             else
                             {
-                                <MudText Typo="Typo.body1"><MarkdownRenderer Content="@message.Text" /></MudText>
+                                @if (string.IsNullOrEmpty(message.Text))
+                                {
+                                    <MudText Color="Color.Error">No bot response received. Please try again.</MudText>
+                                }
+                                else
+                                {
+                                    <MudText Typo="Typo.body1"><MarkdownRenderer Content="@message.Text" /></MudText>
+                                }
                             }
-                        }
-                    </MudCardContent>
-                </MudCard>
+                        </MudCardContent>
+                    </MudCard>
+                }
+                @if (IsProcessing)
+                {
+                    <MudText Align="Align.Center" Class="processing-animation">
+                        <MudProgressCircular Class="mr-2" Size="Size.Small" Color="Color.Info" Indeterminate="true" />
+                        Processing...
+                    </MudText>
+                }
             }
-            @if (IsProcessing)
-            {
-                <MudText Align="Align.Center" Class="processing-animation">
-                    <MudProgressCircular Class="mr-2" Size="Size.Small" Color="Color.Info" Indeterminate="true" />
-                    Processing...
-                </MudText>
-            }
-        }
+        </MudPaper>
+        <div class="chat-input-wrapper" style="padding: 16px;padding-top: 8px;">
+            <MudTextField @ref="chatInputField" 
+                         Id="chatInput" 
+                         @bind-Value="UserMessage"
+                         TextUpdateSuppression="true"
+                         DebounceInterval="50"
+                         Clearable="true"
+                         Adornment="Adornment.End"
+                         Placeholder="Type your message and press Enter..."
+                         Variant="Variant.Outlined"
+                         Margin="Margin.Dense"
+                         Immediate="true"
+                         Disabled="@IsProcessing"
+                         OnKeyDown="@HandleKeyPress" />
+        </div>
     </MudPaper>
-    <div style="position: absolute; bottom: 16px; left: 16px; right: 16px;">
-        <MudTextField @ref="chatInputField" 
-                     Id="chatInput" 
-                     @bind-Value="UserMessage"
-                     TextUpdateSuppression="true"
-                     DebounceInterval="50"
-                     Clearable="true"
-                     Adornment="Adornment.End"
-                     Placeholder="Type your message and press Enter..."
-                     Variant="Variant.Outlined"
-                     Margin="Margin.Dense"
-                     Immediate="true"
-                     Disabled="@IsProcessing"
-                     OnKeyDown="@HandleKeyPress" />
-    </div>
-</MudPaper>
+</div>
 
 @code {
     [Parameter]
@@ -79,6 +101,7 @@
     private MudTextField<string> chatInputField;
     private string UserMessage { get; set; } = string.Empty;
     private bool IsProcessing { get; set; } = false;
+    private bool isMenuExpanded = false;
 
     private bool _shouldScrollToBottom = false;
     private string apiUrl;
@@ -258,5 +281,34 @@
     {
         public string ConversationId { get; set; } = string.Empty;
         public string Response { get; set; } = string.Empty;
+    }
+
+
+    private List<string> predefinedQuestions = new()
+    {
+        "What are my deductibles?",
+        "What is my out-of-pocket maximum?",
+        "What are my copayments for primary care visits?",
+        "What are my copayments for specialist visits?",
+        "What are my prescription drug benefits?",
+        "What mental health services are covered?",
+        "Is prior authorization required for any services?",
+        "What preventive care services are covered?",
+        "Are there any exclusions I should know about?",
+        "What is my coinsurance for hospital stays?"
+    };
+    private void ToggleMenu()
+    {
+        isMenuExpanded = !isMenuExpanded;
+        StateHasChanged();
+    }
+    private async Task SendPredefinedQuestion(string question)
+    {
+        if (IsProcessing) return;
+
+        IsProcessing = true;
+        UserMessage = question;
+        isMenuExpanded = false;
+        await HandleSendMessageAsync(UserMessage);
     }
 }
